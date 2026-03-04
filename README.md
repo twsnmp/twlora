@@ -10,19 +10,45 @@ This repository provides a collection of software to bridge the gap between phys
 ## Included Components
 
 ### 🛠 Configuration Tools
-* **Serial/USB Configurator**: A utility to configure LoRa module parameters (frequency, spreading factor, etc.) via USB-Serial interface.
-* **ESP32 Configurator**: A firmware tool to manage LoRa module settings directly from an ESP32.
+* **Serial/USB Configurator (Go)**: A utility to configure LoRa module parameters via USB-Serial interface.
+* **ESP32 Configurator (Arduino)**: A firmware tool to manage LoRa module settings directly from an ESP32-C6.
 
-### 📡 Firmware
-* **Motion Sensor Transmitter (ESP32)**: A program that captures PIR sensor data and broadcasts it over LoRa.
+### 📡 Firmware (Arduino)
+* **Radar Sensor Transmitter (ESP32-C6)**: A program that captures LD2410C 24GHz mmWave Radar data and broadcasts it over LoRa.
+* **LoRa TxRx Test**: A simple bridge program to test LoRa communication.
 
 ### 🖥 Receiver & Integration (Go)
-* **LoRa Data Gateway**: A high-performance Go-based receiver that processes incoming LoRa packets and forwards them to:
-    * **Syslog**: For centralized logging and TWSNMP analysis.
-    * **MQTT**: For IoT dashboard integration and real-time monitoring.
+* **twLoRaToLog**: A high-performance Go-based receiver that processes incoming LoRa packets and forwards them to Syslog or MQTT for TWSNMP analysis.
 
-## Getting Started
-(You can add specific build or installation instructions here later)
+## Build and Setup
+
+This project uses [mise](https://mise.jdx.dev/) for tool and task management.
+
+### Prerequisites
+- Install `mise` on your system.
+- Trust the configuration in this repository:
+  ```bash
+  mise trust
+  ```
+
+### Build Steps
+
+1. **Install Tools and Setup Arduino Environment**:
+   ```bash
+   mise install
+   mise run arduino:setup
+   ```
+
+2. **Build All Components**:
+   ```bash
+   mise run build
+   ```
+   Built binaries and firmware will be saved in the `dist/` directory.
+
+3. **Individual Tasks**:
+   - Build Go projects: `mise run go:build` (Outputs: `twLoRaToLog`, `twLoRaSetup`)
+   - Compile Radar firmware: `mise run arduino:compile:radar`
+   - Compile Setup firmware: `mise run arduino:compile:setup`
 
 ## License
 [Apache2](./LICENSE)

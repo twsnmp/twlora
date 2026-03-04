@@ -1,0 +1,43 @@
+[tools]
+go = "1.25"
+arduino-cli = "latest"
+
+[tasks."arduino:setup"]
+description = "Install Arduino cores and libraries"
+run = """
+arduino-cli core update-index
+arduino-cli core install esp32:esp32
+arduino-cli lib install "ld2410"
+arduino-cli lib install "EspSoftwareSerial"
+"""
+
+[tasks."arduino:compile:radar"]
+description = "Compile the Radar sensor ESP32-C6 sketch"
+depends = ["arduino:setup"]
+run = "arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 --output-dir dist/radar ESP32C6LoRaLD2410C/ESP32C6LoRaLD2410C.ino"
+
+[tasks."arduino:compile:setup"]
+description = "Compile the LoRa Setup ESP32-C6 sketch"
+depends = ["arduino:setup"]
+run = "arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 --output-dir dist/setup ESP32LoRaSetup/ESP32LoRaSetup.ino"
+
+[tasks."arduino:compile:txrx"]
+description = "Compile the LoRa TxRx ESP32-C6 sketch"
+depends = ["arduino:setup"]
+run = "arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 --output-dir dist/txrx ESP32C6LoRaTxRx/ESP32C6LoRaTxRx.ino"
+
+[tasks."arduino:compile"]
+description = "Compile all Arduino sketches"
+depends = ["arduino:compile:radar", "arduino:compile:setup", "arduino:compile:txrx"]
+
+[tasks."go:build"]
+description = "Build Go projects"
+run = """
+mkdir -p dist
+cd twLoRaToLog && go build -o ../dist/twLoRaToLog
+cd ../twLoRaSetup && go build -o ../dist/twLoRaSetup
+"""
+
+[tasks.build]
+description = "Build all components"
+depends = ["arduino:compile", "go:build"]
