@@ -2,30 +2,63 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"go.bug.st/serial"
 )
 
+var version = "v1.0.0"
+var commit = ""
+var syslogDst = ""
+var portName = ""
+var list = false
+var debug = false
+
+func init() {
+	flag.BoolVar(&list, "list", false, "list available serial ports")
+	flag.StringVar(&portName, "port", "", "serial port name")
+	flag.StringVar(&syslogDst, "syslog", "", "syslog destnation list")
+	flag.BoolVar(&debug, "debug", false, "debug mode")
+	flag.VisitAll(func(f *flag.Flag) {
+		if s := os.Getenv("TWLORATOLOG_" + strings.ToUpper(f.Name)); s != "" {
+			f.Value.Set(s)
+		}
+	})
+	flag.Parse()
+}
+
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage:")
-		fmt.Println("  go run main.go list          - List available serial ports")
-		fmt.Println("  go run main.go <device_path> - Start receiving from the specified port")
-		return
-	}
-
-	arg := os.Args[1]
-
-	if arg == "list" {
+	if list {
 		listPorts()
 		return
 	}
+	if portName == "" {
+		log.Fatalf("Error: No serial port specified")
+	}
 
-	startReceiver(arg)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if syslogDst != "" {
+		go startSyslog(ctx)
+	}
+	go startReceiver(ctx)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down...")
+	cancel()
+	time.Sleep(time.Second * 1)
 }
 
 func listPorts() {
@@ -45,7 +78,7 @@ func listPorts() {
 	}
 }
 
-func startReceiver(portName string) {
+func startReceiver(ctx context.Context) {
 	mode := &serial.Mode{
 		BaudRate: 9600,
 	}
@@ -54,9 +87,14 @@ func startReceiver(portName string) {
 	if err != nil {
 		log.Fatalf("Error opening serial port %s: %v", portName, err)
 	}
-	defer port.Close()
 
 	log.Printf("Started listening on %s (9600 bps)\n", portName)
+
+	go func() {
+		<-ctx.Done()
+		log.Println("Closing serial port...")
+		port.Close()
+	}()
 
 	scanner := bufio.NewScanner(port)
 	for scanner.Scan() {
@@ -65,18 +103,27 @@ func startReceiver(portName string) {
 		if line == "" {
 			continue
 		}
-
-		log.Println(line)
-
-		// Parse format: RM,ID,status,dist1,dist2 (e.g., RM,1,T,45,20)
-		parts := strings.Split(line, ",")
-		if len(parts) >= 3 && parts[2] == "T" {
-			// Trigger BEEP sound
-			fmt.Print("\a") // ASCII Bell
+		if syslogDst != "" {
+			sendSyslog(line)
+		}
+		if debug {
+			log.Println(line)
+			// Parse format: RM,ID,status,dist1,dist2 (e.g., RM,1,T,45,20)
+			parts := strings.Split(line, ",")
+			if len(parts) >= 3 && parts[2] == "T" {
+				// Trigger BEEP sound
+				fmt.Print("\a") // ASCII Bell
+			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Printf("Error reading from serial port: %v\n", err)
+		// Check if error is due to port being closed
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			log.Printf("Error reading from serial port: %v\n", err)
+		}
 	}
 }
