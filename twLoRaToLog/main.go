@@ -18,6 +18,11 @@ import (
 var version = "v1.0.0"
 var commit = ""
 var syslogDst = ""
+var mqttDst = ""
+var mqttUser = ""
+var mqttPassword = ""
+var mqttClientID = "twlora-log"
+var mqttTopic = "twlora/sensor"
 var portName = ""
 var list = false
 var debug = false
@@ -26,6 +31,11 @@ func init() {
 	flag.BoolVar(&list, "list", false, "list available serial ports")
 	flag.StringVar(&portName, "port", "", "serial port name")
 	flag.StringVar(&syslogDst, "syslog", "", "syslog destnation list")
+	flag.StringVar(&mqttDst, "mqtt", "", "mqtt broker destination")
+	flag.StringVar(&mqttUser, "mqttuser", "", "mqtt username")
+	flag.StringVar(&mqttPassword, "mqttpassword", "", "mqtt password")
+	flag.StringVar(&mqttClientID, "mqttclientid", "twlora-log", "mqtt client id")
+	flag.StringVar(&mqttTopic, "mqtttopic", "twlora/sensor", "mqtt topic")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.VisitAll(func(f *flag.Flag) {
 		if s := os.Getenv("TWLORATOLOG_" + strings.ToUpper(f.Name)); s != "" {
@@ -49,6 +59,9 @@ func main() {
 
 	if syslogDst != "" {
 		go startSyslog(ctx)
+	}
+	if mqttDst != "" {
+		go startMQTT(ctx)
 	}
 	go startReceiver(ctx)
 
@@ -105,6 +118,9 @@ func startReceiver(ctx context.Context) {
 		}
 		if syslogDst != "" {
 			sendSyslog(line)
+		}
+		if mqttDst != "" {
+			publishMQTT(line)
 		}
 		if debug {
 			log.Println(line)
