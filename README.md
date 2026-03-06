@@ -4,6 +4,8 @@
 
 `twlora` is a comprehensive suite of tools and programs for LoRa communication experiments and sensor network integration within the TWSNMP ecosystem.
 
+![twlora System Diagram](./images/twlora_system.png)
+
 ## Overview
 This repository provides a collection of software to bridge the gap between physical LoRa modules and network management systems. It covers everything from hardware configuration to data forwarding via modern protocols.
 
