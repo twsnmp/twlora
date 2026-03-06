@@ -42,14 +42,30 @@ func startSyslog(ctx context.Context) {
 			log.Println("stop syslog")
 			return
 		case msg := <-syslogCh:
-			s := fmt.Sprintf("<%d>%s %s twLoRa: %s", 21*8+6, time.Now().Format("2006-01-02T15:04:05-07:00"), host, msg)
-			for _, d := range dst {
-				d.Write([]byte(s))
+			if s := makeSyslogMsg(host, msg); s != "" {
+				for _, d := range dst {
+					d.Write([]byte(s))
+				}
 			}
 		}
 	}
 }
 
+func makeSyslogMsg(host string, msg string) string {
+	// Parse format: RM,ID,detected,movingDistance,stationaryDistance (e.g., RM,1,T,45,20)
+	a := strings.Split(msg, ",")
+	if len(a) != 5 || a[0] != "RM" {
+		return fmt.Sprintf("<%d>%s %s twLoRa: %s", 21*8+6, time.Now().Format("2006-01-02T15:04:05-07:00"), host, msg)
+	}
+	return fmt.Sprintf("<%d>%s %s twLoRa: type=%s,id=%s,detected=%s,movingDistance=%s,stationaryDistance=%s", 21*8+6, time.Now().Format("2006-01-02T15:04:05-07:00"), host, a[0], a[1], a[2], a[3], a[4])
+}
+
 func sendSyslog(msg string) {
-	syslogCh <- msg
+	select {
+	case syslogCh <- msg:
+	default:
+		if debug {
+			log.Println("syslog channel full, skipping message")
+		}
+	}
 }
