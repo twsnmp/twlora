@@ -50,5 +50,50 @@ This project uses [mise](https://mise.jdx.dev/) for tool and task management.
    - Compile Radar firmware: `mise run arduino:compile:radar`
    - Compile Setup firmware: `mise run arduino:compile:setup`
 
+## Building and Flashing Firmware
+
+After setting up the environment, you can build and flash the firmware using the following methods.
+
+### 1. Arduino IDE (Easiest for Beginners)
+1. Install [Arduino IDE](https://www.arduino.cc/en/software).
+2. Follow the [XIAO ESP32C6 Setup Guide](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) to add the ESP32 board support.
+3. Install the required libraries via **Library Manager**:
+   - `ld2410` by Trevor Shannon
+   - `EspSoftwareSerial`
+4. Open the `.ino` file from the project directory (e.g., `ESP32C6LoRaLD2410C/ESP32C6LoRaLD2410C.ino`).
+5. Select **Tools > Board > esp32 > Seeed Studio XIAO ESP32C6**.
+6. Connect your device, select the correct port in **Tools > Port**.
+7. Click the **Upload** button.
+
+### 2. Arduino CLI (Recommended for Advanced Users)
+If you have `arduino-cli` installed (via `mise install`):
+
+```bash
+# For Radar Sensor
+arduino-cli upload -p <PORT> --fqbn esp32:esp32:XIAO_ESP32C6 ESP32C6LoRaLD2410C
+
+# For Setup Tool
+arduino-cli upload -p <PORT> --fqbn esp32:esp32:XIAO_ESP32C6 ESP32LoRaSetup
+```
+*Note: Replace `<PORT>` with your actual serial port (e.g., `/dev/tty.usbmodem...` on macOS or `COMx` on Windows).*
+
+### 3. ESP32 Flash Download Tool (Windows GUI)
+If you are using the pre-compiled binaries in the `dist/` directory:
+1. Download the [ESP32 Flash Download Tool](https://www.espressif.com/en/support/download/other-tools).
+2. Select **ChipType: ESP32-C6**.
+3. Load the binary files from `dist/<component>/`:
+   - `...bootloader.bin` @ `0x0`
+   - `...partitions.bin` @ `0x8000`
+   - `...ino.bin` @ `0x10000`
+4. Set **SPI SPEED** to **80MHz** and **SPI MODE** to **DIO**.
+5. Select the COM port and click **START**.
+
+### 4. esptool (Command Line)
+You can also use [esptool.py](https://github.com/espressif/esptool) (installable via `pip install esptool`):
+
+```bash
+esptool.py --chip esp32c6 --port <PORT> --baud 921600 write_flash 0x0 dist/radar/ESP32C6LoRaLD2410C.ino.bootloader.bin 0x8000 dist/radar/ESP32C6LoRaLD2410C.ino.partitions.bin 0x10000 dist/radar/ESP32C6LoRaLD2410C.ino.bin
+```
+
 ## License
 [Apache2](./LICENSE)
