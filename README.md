@@ -6,6 +6,9 @@
 
 ![twlora System Diagram](./images/twlora_system.png)
 
+## Experimental Circuit
+![Experimental Circuit](./images/experimental_circuit.jpg)
+
 ## Overview
 This repository provides a collection of software to bridge the gap between physical LoRa modules and network management systems. It covers everything from hardware configuration to data forwarding via modern protocols.
 

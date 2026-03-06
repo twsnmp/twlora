@@ -6,6 +6,9 @@ TWSNMPシリーズにおけるLoRa通信実験および、LoRaを用いたセン
 
 ![twlora システム構成図](./images/twlora_system.png)
 
+## 実験用の回路
+![実験用の回路](./images/experimental_circuit.jpg)
+
 ## 含まれるツール・プログラム
 
 ### 🛠 設定ツール
