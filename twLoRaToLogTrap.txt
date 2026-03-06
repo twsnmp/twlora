@@ -1,0 +1,59 @@
+TWLORATOLOGTRAP-MIB DEFINITIONS ::= BEGIN
+
+   IMPORTS
+       MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE,enterprises
+           FROM SNMPv2-SMI
+       DisplayString FROM SNMPv2-TC;
+
+twise                OBJECT IDENTIFIER ::= { enterprises 17861 }
+twProducts           OBJECT IDENTIFIER ::= { twise 1 }
+
+twLoRaToLogTrap MODULE-IDENTITY
+       LAST-UPDATED "2603061658Z"
+       ORGANIZATION "Twise Labo Inc."
+       CONTACT-INFO
+                  "Masayuki Yamai
+               Postal: Twise Labo  Inc.
+                       Saitama Japan
+               E-mail: twsnmp@gmail.com"
+       DESCRIPTION       "A MIB module for twLoRaToLogTrap"
+
+      ::= { twProducts 11 }
+
+twLoRaToLogTrapTraps            OBJECT IDENTIFIER ::= { twLoRaToLogTrap 0 }
+twLoRaToLogTrapObjects          OBJECT IDENTIFIER ::= { twLoRaToLogTrap 1 }
+
+-- Trap data
+
+twLoRaToLogSensorID OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..255))
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION "Sensor ID"
+    ::= { twLoRaToLogTrapObjects 0 }
+
+twLoRaToLogMovingDistance OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "cm"
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION "Moving distance"
+    ::= { twLoRaToLogTrapObjects 1 }
+
+twLoRaToLogStationaryDistance OBJECT-TYPE
+    SYNTAX     INTEGER
+    UNITS      "cm"
+    MAX-ACCESS accessible-for-notify
+    STATUS     current
+    DESCRIPTION "Stationary distance"
+    ::= { twLoRaToLogTrapObjects 2 }
+
+
+-- twHr2Trap  Traps
+
+twLoRaToLogDetectedTrap  NOTIFICATION-TYPE
+    OBJECTS { twLoRaToLogSensorID, twLoRaToLogMovingDistance, twLoRaToLogStationaryDistance }
+    STATUS  current
+    DESCRIPTION "Trap of motion detected"
+    ::= { twLoRaToLogTrapTraps 1 }
+END

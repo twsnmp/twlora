@@ -23,6 +23,9 @@ var mqttUser = ""
 var mqttPassword = ""
 var mqttClientID = "twlora-log"
 var mqttTopic = "twlora/sensor"
+var snmpTrapDst = ""
+var snmpCommunity = "public"
+var snmpInterval = 0
 var portName = ""
 var list = false
 var debug = false
@@ -36,6 +39,9 @@ func init() {
 	flag.StringVar(&mqttPassword, "mqttpassword", "", "mqtt password")
 	flag.StringVar(&mqttClientID, "mqttclientid", "twlora-log", "mqtt client id")
 	flag.StringVar(&mqttTopic, "mqtttopic", "twlora/sensor", "mqtt topic")
+	flag.StringVar(&snmpTrapDst, "snmp", "", "snmp trap destination")
+	flag.StringVar(&snmpCommunity, "snmpcommunity", "public", "snmp community")
+	flag.IntVar(&snmpInterval, "snmpinterval", 0, "snmp trap interval (minutes)")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.VisitAll(func(f *flag.Flag) {
 		if s := os.Getenv("TWLORATOLOG_" + strings.ToUpper(f.Name)); s != "" {
@@ -62,6 +68,9 @@ func main() {
 	}
 	if mqttDst != "" {
 		go startMQTT(ctx)
+	}
+	if snmpTrapDst != "" {
+		go startSNMP(ctx)
 	}
 	go startReceiver(ctx)
 
@@ -121,6 +130,9 @@ func startReceiver(ctx context.Context) {
 		}
 		if mqttDst != "" {
 			publishMQTT(line)
+		}
+		if snmpTrapDst != "" {
+			sendSNMPTrap(line)
 		}
 		if debug {
 			log.Println(line)
