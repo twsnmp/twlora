@@ -47,6 +47,49 @@ TWSNMPシリーズにおけるLoRa通信実験および、LoRaを用いたセン
    - レーダー用ファームウェアのコンパイル: `mise run arduino:compile:radar`
    - 設定用ファームウェアのコンパイル: `mise run arduino:compile:setup`
 
+## 使用方法
+
+### 🛠 twLoRaSetup (設定ツール)
+USBシリアル経由でLoRaモジュールのパラメータを設定するためのGo言語製ユーティリティです。
+
+**設定の読み取り:**
+```bash
+twLoRaSetup <ポート名>
+# 例: twLoRaSetup /dev/tty.usbserial-1410
+```
+
+**設定の書き込み:**
+```bash
+twLoRaSetup <ポート名> <チャンネル> <アドレス>
+# 例: 920MHz (チャンネル 920)、アドレス 1 に設定する場合
+twLoRaSetup /dev/tty.usbserial-1410 920 1
+```
+
+### 🖥 twLoRaToLog (受信・転送ツール)
+LoRaパケットを受信し、Syslog、MQTT、またはSNMP Trapへ転送する高機能レシーバーです。
+
+**基本の使用方法:**
+```bash
+twLoRaToLog -port <ポート名> [オプション]
+```
+
+**主なオプション:**
+- `-port`: シリアルポート名 (必須)
+- `-syslog`: Syslog転送先 (例: `192.168.1.1:514`)
+- `-mqtt`: MQTTブローカーURL (例: `tcp://localhost:1883`)
+- `-mqttuser`: MQTTユーザー名
+- `-mqttpassword`: MQTTパスワード
+- `-snmp`: SNMP Trap転送先 (例: `192.168.1.1:162`)
+- `-snmpcommunity`: SNMPコミュニティ名 (默认: `public`)
+- `-snmpinterval`: SNMP Trap送信間隔（分） (デフォルト: `0` - すべて送信)
+- `-list`: 利用可能なシリアルポートを一覧表示
+- `-debug`: デバックモード (コンソールへのログ出力と検知時のビープ音)
+
+**実行例 (SyslogとMQTTへ転送):**
+```bash
+twLoRaToLog -port /dev/tty.usbserial-1410 -syslog 192.168.1.100:514 -mqtt tcp://broker.hivemq.com:1883 -debug
+```
+
 ## ビルドと書き込み
 
 環境構築後、以下のいずれかの方法でファームウェアのビルドと書き込みを行ってください。

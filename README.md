@@ -48,7 +48,50 @@ This project uses [mise](https://mise.jdx.dev/) for tool and task management.
 3. **Individual Tasks**:
    - Build Go projects: `mise run go:build` (Outputs: `twLoRaToLog`, `twLoRaSetup`)
    - Compile Radar firmware: `mise run arduino:compile:radar`
-   - Compile Setup firmware: `mise run arduino:compile:setup`
+   - Build Setup firmware: `mise run arduino:compile:setup`
+
+## Usage Guide
+
+### 🛠 twLoRaSetup (Configuration Tool)
+A Go-based utility to configure LoRa module parameters via USB-Serial.
+
+**Read Configuration:**
+```bash
+twLoRaSetup <Port>
+# Example: twLoRaSetup /dev/tty.usbserial-1410
+```
+
+**Write Configuration:**
+```bash
+twLoRaSetup <Port> <Channel> <Address>
+# Example: Set to 920MHz (Channel 920) and Address 1
+twLoRaSetup /dev/tty.usbserial-1410 920 1
+```
+
+### 🖥 twLoRaToLog (Receiver & Forwarder)
+A high-performance receiver that processes LoRa packets and forwards them to Syslog, MQTT, or SNMP Trap.
+
+**Basic Usage:**
+```bash
+twLoRaToLog -port <Port> [options]
+```
+
+**Options:**
+- `-port`: Serial port name (Required)
+- `-syslog`: Destination for Syslog (e.g., `192.168.1.1:514`)
+- `-mqtt`: MQTT Broker URL (e.g., `tcp://localhost:1883`)
+- `-mqttuser`: MQTT Username
+- `-mqttpassword`: MQTT Password
+- `-snmp`: SNMP Trap destination (e.g., `192.168.1.1:162`)
+- `-snmpcommunity`: SNMP community name (Default: `public`)
+- `-snmpinterval`: SNMP Trap interval in minutes (Default: `0` - every event)
+- `-list`: List available serial ports
+- `-debug`: Enable debug mode (prints logs to console and triggers beep on detection)
+
+**Example (Forward to Syslog and MQTT):**
+```bash
+twLoRaToLog -port /dev/tty.usbserial-1410 -syslog 192.168.1.100:514 -mqtt tcp://broker.hivemq.com:1883 -debug
+```
 
 ## Building and Flashing Firmware
 
