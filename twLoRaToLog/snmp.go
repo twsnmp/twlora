@@ -62,21 +62,50 @@ func sendTrapMessage(msg string) {
 	if err != nil {
 		return
 	}
-
-	snmp := &gosnmp.GoSNMP{
-		Target:    snmpTrapDst,
-		Port:      162,
-		Community: snmpCommunity,
-		Version:   gosnmp.Version2c,
-		Timeout:   gosnmp.Default.Timeout,
-		Retries:   gosnmp.Default.Retries,
+	port := 162
+	ta := strings.SplitN(snmpTrapDst, ":", 2)
+	if len(ta) > 1 {
+		snmpTrapDst = ta[0]
+		if v, err := strconv.ParseInt(ta[1], 10, 64); err == nil && v > 0 && v < 0xfffe {
+			port = int(v)
+		}
 	}
-
-	if err := snmp.Connect(); err != nil {
+	gosnmp.Default.Target = snmpTrapDst
+	gosnmp.Default.Port = uint16(port)
+	gosnmp.Default.Timeout = time.Duration(3) * time.Second
+	switch snmpMode {
+	case "v3auth":
+		gosnmp.Default.Version = gosnmp.Version3
+		gosnmp.Default.SecurityModel = gosnmp.UserSecurityModel
+		gosnmp.Default.MsgFlags = gosnmp.AuthNoPriv
+		gosnmp.Default.SecurityParameters = &gosnmp.UsmSecurityParameters{
+			UserName:                 snmpUser,
+			AuthoritativeEngineID:    snmpEngineID,
+			AuthenticationProtocol:   gosnmp.SHA,
+			AuthenticationPassphrase: snmpPassword,
+		}
+	case "v3authpriv":
+		gosnmp.Default.Version = gosnmp.Version3
+		gosnmp.Default.SecurityModel = gosnmp.UserSecurityModel
+		gosnmp.Default.MsgFlags = gosnmp.AuthPriv
+		gosnmp.Default.SecurityParameters = &gosnmp.UsmSecurityParameters{
+			UserName:                 snmpUser,
+			AuthoritativeEngineID:    snmpEngineID,
+			AuthenticationProtocol:   gosnmp.SHA,
+			AuthenticationPassphrase: snmpPassword,
+			PrivacyProtocol:          gosnmp.AES,
+			PrivacyPassphrase:        snmpPassword,
+		}
+	default:
+		gosnmp.Default.Version = gosnmp.Version2c
+		gosnmp.Default.Community = snmpCommunity
+	}
+	err = gosnmp.Default.Connect()
+	if err != nil {
 		log.Printf("SNMP connect error: %v", err)
 		return
 	}
-	defer snmp.Conn.Close()
+	defer gosnmp.Default.Conn.Close()
 
 	// OIDs from twLoRaToLogTrap.txt
 	// .1.3.6.1.4.1.17861.1.11
@@ -109,7 +138,7 @@ func sendTrapMessage(msg string) {
 		},
 	}
 
-	if _, err := snmp.SendTrap(trap); err != nil {
+	if _, err := gosnmp.Default.SendTrap(trap); err != nil {
 		log.Printf("SNMP send trap error: %v", err)
 		return
 	}

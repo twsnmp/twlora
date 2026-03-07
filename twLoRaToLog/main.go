@@ -25,6 +25,10 @@ var mqttClientID = "twlora-log"
 var mqttTopic = "twlora/sensor"
 var snmpTrapDst = ""
 var snmpCommunity = "public"
+var snmpMode = "v2c"
+var snmpUser = ""
+var snmpPassword = ""
+var snmpEngineID = ""
 var snmpInterval = 0
 var portName = ""
 var list = false
@@ -41,6 +45,10 @@ func init() {
 	flag.StringVar(&mqttTopic, "mqtttopic", "twlora/sensor", "mqtt topic")
 	flag.StringVar(&snmpTrapDst, "snmp", "", "snmp trap destination")
 	flag.StringVar(&snmpCommunity, "snmpcommunity", "public", "snmp community")
+	flag.StringVar(&snmpMode, "snmpmode", "v2c", "snmp mode (v2c, v3auth, v3authpriv)")
+	flag.StringVar(&snmpUser, "snmpuser", "", "snmp v3 user")
+	flag.StringVar(&snmpPassword, "snmppassword", "", "snmp v3 password/passphrase")
+	flag.StringVar(&snmpEngineID, "snmpengineid", "", "snmp v3 engine id")
 	flag.IntVar(&snmpInterval, "snmpinterval", 0, "snmp trap interval (minutes)")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.VisitAll(func(f *flag.Flag) {
