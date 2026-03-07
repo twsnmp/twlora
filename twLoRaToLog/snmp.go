@@ -84,15 +84,13 @@ func sendTrapMessage(msg string) {
 	trapOID := baseOID + ".0.1" // twLoRaToLogDetectedTrap
 	objOID := baseOID + ".1"
 
-	pdu := gosnmp.SnmpPDU{
-		Name:  ".1.3.6.1.6.3.1.1.4.1.0",
-		Type:  gosnmp.OctetString,
-		Value: trapOID,
-	}
-
 	trap := gosnmp.SnmpTrap{
 		Variables: []gosnmp.SnmpPDU{
-			pdu,
+			{
+				Name:  ".1.3.6.1.6.3.1.1.4.1.0",
+				Type:  gosnmp.ObjectIdentifier,
+				Value: trapOID,
+			},
 			{
 				Name:  objOID + ".0", // twLoRaToLogSensorID
 				Type:  gosnmp.OctetString,
